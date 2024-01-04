@@ -22,6 +22,7 @@ networks:
 services:
   setup:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    container_name: setup
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
     user: "0"
@@ -80,6 +81,7 @@ services:
       setup:
         condition: service_healthy
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    container_name: es01
     labels:
       co.elastic.logs/module: elasticsearch
     volumes:
@@ -124,6 +126,7 @@ services:
       es01:
         condition: service_healthy
     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    container_name: kibana
     labels:
       co.elastic.logs/module: kibana
     volumes:
@@ -158,11 +161,12 @@ services:
       kibana:
         condition: service_healthy
     image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
+    container_name: metricbeat
     user: root
     volumes:
       - certs:/usr/share/metricbeat/certs
       - metricbeatdata01:/usr/share/metricbeat/data
-      - ./metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - ${COMPOSE_PROJECT_DIR}/metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
       - /proc:/hostfs/proc:ro
@@ -179,12 +183,13 @@ services:
       es01:
         condition: service_healthy
     image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
+    container_name: filebeat
     user: root
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata01:/usr/share/filebeat/data
-      - ./filebeat/filebeat_ingest_data/:/usr/share/filebeat/ingest_data/
-      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ${COMPOSE_PROJECT_DIR}/filebeat/filebeat_ingest_data/:/usr/share/filebeat/ingest_data/
+      - ${COMPOSE_PROJECT_DIR}/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro"
     environment:
@@ -201,14 +206,15 @@ services:
       kibana:
         condition: service_healthy
     image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
+    container_name: logstash
     labels:
       co.elastic.logs/module: logstash
     user: root
     volumes:
       - certs:/usr/share/logstash/certs
       - logstashdata01:/usr/share/logstash/data
-      - ./logstash/logstash_ingest_data/:/usr/share/logstash/ingest_data/
-      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ${COMPOSE_PROJECT_DIR}/logstash/logstash_ingest_data/:/usr/share/logstash/ingest_data/
+      - ${COMPOSE_PROJECT_DIR}/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     environment:
       - xpack.monitoring.enabled=false
       - ELASTIC_USER=elastic
